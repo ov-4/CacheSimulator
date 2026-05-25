@@ -89,13 +89,15 @@ public:
 
     inline void setSize(x64 x, x64 y) { s = x; E = y; cache.resize(((x64)1<<s), std::vector<Cache>(E)); }
 
-    inline void setPrev(cacheLayer *p, cacheLayer *q) { upper = p; lower = q; }
+    inline void setUpper(cacheLayer *p) { upper = p; }
+
+    inline void setLower(cacheLayer *p) { lower = p; }
 
     inline cacheLayer* getUpper() { return upper; }
 
     inline cacheLayer* getLower() { return lower; }
 
-    cacheLayer(x64 s, x64 E, cacheLayer *p, cacheLayer *q) { setSize(s, E); setPrev(p, q); }
+    cacheLayer(x64 s, x64 E, cacheLayer *up, cacheLayer *lo) { setSize(s, E); setUpper(up); setLower(low); }
     cacheLayer() = default;
 
     inline void addr2TagSet(x64 addr, x64 &Tag, x64 &Set)
