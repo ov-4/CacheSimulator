@@ -77,6 +77,18 @@ public:
         auto findTarget = findTag(Tag, Set);
         if (findTarget == cache[Set].end()) return false;
         findTarget -> write();
+        writeCnt++;
+        return true;
+    }
+
+    inline bool read(x64 addr)
+    {
+        x64 Tag, Set;
+        addr2TagSet(addr, Tag, Set);
+        auto findTarget = findTag(Tag, Set);
+        if (findTarget == cache[Set].end()) return false;
+        findTarget -> read();
+        return true;
     }
 
     inline void evi(x64 addr)
@@ -86,11 +98,7 @@ public:
 
         // find the corresponding block to remove
         // same level
-        auto findTarget = std::find_if(cache[Set].begin(), cache[Set].end(),
-                                       [&](const Cache &c)
-                                       {
-                                           return c.valid && c.tag == Tag;
-                                       });
+        auto findTarget = findTag(Tag, Set);
         if (findTarget == cache[Set].end()) return;
 
         eviCnt++;
@@ -102,8 +110,7 @@ public:
 
         if (lower != NULL && findTarget -> written)
         {
-            lower -> writeCnt ++;
-            
+            lower -> write(addr);
         }
     }
 
@@ -137,7 +144,7 @@ public:
         findOld->valid = true;
         findOld->time = timeNow;
         findOld->tag = Tag;
-        findFree->written = false;
+        findOld->written = false;
     }
 };
 
@@ -179,3 +186,4 @@ public:
 
     
 }
+// namespace ov4
