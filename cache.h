@@ -49,10 +49,10 @@ public:
 
     inline bool getWritten() { return written; }
 
-    inline void write()
+    inline void write(bool updateTime = true)
     {
         written = true;
-        setTime();
+        if (updateTime) setTime();
     }
     
     inline void read()
@@ -77,7 +77,7 @@ public:
 
     std::vector<std::vector<Cache>> cache;
 
-    inline void setSize(x64 x, x64 y) { s = x; E = y; cache.resize((1<<s), std::vector<Cache>(E)); }
+    inline void setSize(x64 x, x64 y) { s = x; E = y; cache.resize(((x64)1<<s), std::vector<Cache>(E)); }
 
     inline void setPrev(cacheLayer *p, cacheLayer *q) { upper = p; lower = q; }
 
@@ -126,7 +126,7 @@ public:
             hitCnt += increment;
         }
 
-        findTarget -> write();
+        findTarget -> write(increment);
         writeCnt += increment;
 
         if (lower != NULL)
@@ -137,7 +137,7 @@ public:
             if (found != lower -> cache.at(lowerSet).end()) // we've loaded the cache block to this level, so normally it's ok
                                                             // just in case
             {
-                found -> setTime();
+                if (increment) found -> setTime();
             }
         }
     }
