@@ -120,6 +120,11 @@ public:
 
         findTarget -> write();
         writeCnt++;
+
+        if (lower != NULL)
+        {
+            lower -> write(addr);
+        }
     }
 
     inline void read(x64 addr)
@@ -136,6 +141,11 @@ public:
         }
 
         findTarget -> read();
+
+        if (lower != NULL)
+        {
+            lower -> read(addr);
+        }
     }
 
     inline void evi(x64 addr)
@@ -175,23 +185,22 @@ public:
             findFree->time = timeNow;
             findFree->tag = Tag;
             findFree->written = false;
-            return;
+        } else {
+            // no slot is actually free, we have to find the oldest
+            auto findOld = min_element(cache[Set].begin(), cache[Set].end(),
+                                       [](const Cache &x, const Cache &y)
+                                       {
+                                           return x.time < y.time;
+                                       });
+
+            // remove old one first, and add new one
+            evi(tagSet2Addr(findOld->tag, Set));
+
+            findOld->valid = true;
+            findOld->time = timeNow;
+            findOld->tag = Tag;
+            findOld->written = false;
         }
-
-        // no slot is actually free, we have to find the oldest
-        auto findOld = min_element(cache[Set].begin(), cache[Set].end(),
-                                   [](const Cache &x, const Cache &y)
-                                   {
-                                       return x.time < y.time;
-                                   });
-
-        // remove old one first, and add new one
-        evi(tagSet2Addr(findOld -> tag, Set));
-        
-        findOld->valid = true;
-        findOld->time = timeNow;
-        findOld->tag = Tag;
-        findOld->written = false;
 
         if (lower != NULL)
         {
