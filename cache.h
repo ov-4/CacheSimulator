@@ -14,22 +14,34 @@ typedef unsigned long long ull;
 typedef signed long long ll;
 typedef std::size_t x64;
 
-x64 timeNow;
+inline x64 timeNow;
+inline x64 byte; // normal CPU would have same cache line size across L1 L2 L3, so anyway it's glogal
 
 class cacheLayer
 {
 public:
-    ll hitCnt;
-    ll missCnt;
-    ll eviCnt;
-    ll partialCnt; // paritial hit+miss
-    ll writeCnt;
+    ll s = 0, E = 0;
+    ll hitCnt = 0;
+    ll missCnt = 0;
+    ll eviCnt = 0;
+    ll partialCnt = 0; // paritial hit+miss
+    ll writeCnt = 0;
+
+    // feel free to dereference this
+    cacheLayer *upper = NULL;
+    cacheLayer *lower = NULL;
 
     std::vector<std::vector<Cache>> cache;
 
-    inline void setSize(x64 s, x64 E) { cache.resize((1<<s), std::vector<Cache>(E)); }
+    inline void setSize(x64 x, x64 y) { s = x; E = y; cache.resize((1<<s), std::vector<Cache>(E)); }
 
-    cacheLayer(x64 s, x64 E) { setSize(s, E); }
+    inline void setPrev(cacheLayer *p, cacheLayer *q) { upper = p; lower = q; }
+
+    inline cacheLayer* getUpper() { return upper; }
+
+    inline cacheLayer* getLower() { return lower; }
+
+    cacheLayer(x64 s, x64 E, cacheLayer *p, cacheLayer *q) { setSize(s, E); setPrev(p, q); }
 };
 
 class Cache
@@ -41,7 +53,7 @@ public:
     x64 time = 0;
 
 
-    inline void setTime(x64 x) { time = x; }
+    inline void setTime() { time = timeNow; }
 
     inline x64 getTime() { return time; }
 
