@@ -117,6 +117,7 @@ public:
     inline void write(x64 addr, bool increment = 1)
     {
         timeNow++;
+        LOG << "time: " << time << " addr 0x" << std::hex << addr << std::endl;
 
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
@@ -127,14 +128,17 @@ public:
         {
             // when write-back, `i+1` level is always a subset of `i`, so never miss
             missCnt++;
+            LOG << "write: miss: " << missCnt << " addr 0x" << std::hex << addr << std::endl;
             allocate(Tag, Set);
             findTarget = findTag(Tag, Set);
         } else {
             hitCnt += increment;
+            LOG << "write: hit: " << missCnt << " increment: " << increment << " addr 0x" << std::hex << addr << std::endl;
         }
 
-        findTarget -> write(increment);
         writeCnt += increment;
+        LOG << "write: write: " << writeCnt << " increment: " << increment << " addr 0x" << std::hex << addr << std::endl;
+        findTarget -> write(increment);
 
         if (lower != NULL)
         {
@@ -144,7 +148,11 @@ public:
             if (found != lower -> cache.at(lowerSet).end()) // we've loaded the cache block to this level, so normally it's ok
                                                             // just in case
             {
-                if (increment) found -> setTime();
+                if (increment) 
+                { 
+                    LOG << "write: setTime() for lower level" << " addr 0x" << std::hex << addr << std::endl;
+                    found -> setTime();
+                }
             }
         }
     }
@@ -153,6 +161,7 @@ public:
     inline void read(x64 addr)
     {
         timeNow++;
+        LOG << "time: " << time << " addr 0x" << std::hex << addr << std::endl;
 
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
@@ -162,10 +171,12 @@ public:
         if (findTarget == cache.at(Set).end())
         {
             missCnt++;
+            LOG << "read: miss: " << missCnt << " addr 0x" << std::hex << addr << std::endl;
             allocate(Tag, Set);
             findTarget = findTag(Tag, Set);
         } else {
             hitCnt++;
+            LOG << "read: hit: " << hitCnt << " addr 0x" << std::hex << addr << std::endl;
         }
 
         findTarget -> read();
@@ -178,6 +189,7 @@ public:
             if (found != lower -> cache.at(lowerSet).end()) // we've loaded the cache block to this level, so normally it's ok
                                                             // just in case
             {
+                LOG << "read: setTime() for lower level" << " addr 0x" << std::hex << addr << std::endl;
                 found -> setTime();
             }
         }
@@ -195,15 +207,20 @@ public:
         if (findTarget == cache.at(Set).end()) return;
 
         eviCnt++;
+        LOG << "evi: evication: " << eviCnt << " addr 0x" << std::hex << addr << std::endl;
         
         if (upper != NULL)
+        {
+            LOG << "evi: upper level evict addr 0x" << std::hex << addr << std::endl;
             upper -> evi(addr);
+        }
 
         findTarget -> setValid(false);
 
         if (lower != NULL && findTarget -> written)
         {
             // write-back, so doesn't count into write
+            LOG << "evi: lower level write back addr 0x" << std::hex << addr << std::endl;
             lower -> write(addr, 0);
         }
     }
@@ -215,6 +232,7 @@ public:
         // get data from lower level
         if (lower != NULL)
         {
+            LOG << "allocate: reading lower level tag: 0x" << std::hex << Tag << " set: 0x" << std::hex << Set << std::endl;
             lower -> read(this -> tagSet2Addr(Tag, Set));
         }
 
@@ -226,6 +244,7 @@ public:
                                 });
         if (findFree != cache.at(Set).end())
         {
+            LOG << "allocate: found free block tag: 0x" << std::hex << Tag << " set: 0x" << std::hex << Set << std::endl;
             findFree->valid = true;
             findFree->time = timeNow;
             findFree->tag = Tag;
@@ -237,7 +256,8 @@ public:
                                        {
                                            return x.time < y.time;
                                        });
-
+            
+            LOG << "allocate: evicting block, tag: 0x" << std::hex << Tag << " set: 0x" << std::hex << Set << std::endl;
 
             // remove old one first
             evi(tagSet2Addr(findOld->tag, Set));
