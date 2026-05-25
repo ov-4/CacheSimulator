@@ -19,7 +19,7 @@ typedef std::size_t x64;
 typedef std::pair<x64,x64> Pair;
 
 inline x64 timeNow = 0;
-inline x64 b = 6;   // normal CPU would have same cache line size across L1 L2 L3, so anyway it's glogal
+inline x64 b = 6;   // normal CPU would have same cache line size across L1 L2 L3, so anyway it's global
                     // 2^6 = 64, intel default value
 
 inline const x64 ARCH = 64;
