@@ -125,7 +125,14 @@ public:
 
         if (lower != NULL)
         {
-            lower -> write(addr);
+            x64 lowerTag, lowerSet;
+            lower -> addr2TagSet(addr, lowerTag, lowerSet);
+            auto found = lower -> findTag(lowerTag, lowerSet);
+            if (found != lower -> cache.at(lowerSet).end()) // we've loaded the cache block to this level, so normally it's ok
+                                                            // just in case
+            {
+                found -> setTime();
+            }
         }
     }
 
@@ -148,7 +155,14 @@ public:
 
         if (lower != NULL)
         {
-            lower -> read(addr);
+            x64 lowerTag, lowerSet;
+            lower -> addr2TagSet(addr, lowerTag, lowerSet);
+            auto found = lower -> findTag(lowerTag, lowerSet);
+            if (found != lower -> cache.at(lowerSet).end()) // we've loaded the cache block to this level, so normally it's ok
+                                                            // just in case
+            {
+                found -> setTime();
+            }
         }
     }
 
@@ -206,6 +220,9 @@ public:
             findOld->written = false;
         }
 
+        // we don't actually consider data
+        // so if the lower level doesn't have this, it should also load the data
+        // so current level can load
         if (lower != NULL)
         {
             x64 lowerTag, lowerSet, addr = tagSet2Addr(Tag, Set);
