@@ -117,7 +117,7 @@ public:
     inline void write(x64 addr, bool increment = 1)
     {
         timeNow++;
-        LOG << "time: " << time << " addr 0x" << std::hex << addr << std::endl;
+        LOG << "time: " << timeNow << " addr 0x" << std::hex << addr << std::endl;
 
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
@@ -161,7 +161,7 @@ public:
     inline void read(x64 addr)
     {
         timeNow++;
-        LOG << "time: " << time << " addr 0x" << std::hex << addr << std::endl;
+        LOG << "time: " << timeNow << " addr 0x" << std::hex << addr << std::endl;
 
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
