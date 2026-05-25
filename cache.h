@@ -26,6 +26,28 @@ inline const x64 ARCH = 64;
 
 inline bool DEBUG = false;
 
+class Logger
+{
+    template <typename T> const Logger& operator<<(const T& val) const
+    {
+        if (DEBUG)
+        {
+            std::clog << val;
+        }
+        return *this;
+    }
+    const Logger &operator<<(std::ostream &(*manip)(std::ostream &)) const
+    {
+        if (DEBUG)
+        {
+            manip(std::clog);
+        }
+        return *this;
+    }
+};
+
+inline Logger ov4log;
+
 class Cache
 {
 public:
