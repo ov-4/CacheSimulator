@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <iostream>
 #include <utility>
+#include <memory>
+#include <iterator>
 
 #define LOG !(ov4::GLOBAL_DEBUG && ov4::DEBUG) ? (void)0 : ov4::LogVoidify() & std::clog
 
@@ -111,13 +113,14 @@ public:
         return ((Tag << s) | Set) << b;
     }
 
-    inline std::vector<Cache>::iterator findTag(x64 Tag, x64 Set)
+    inline Cache* findTag(x64 Tag, x64 Set)
     {
-        return std::find_if(cache.at(Set).begin(), cache.at(Set).end(),
-                            [&](const Cache &c)
-                            {
-                                return c.valid && c.tag == Tag;
-                            });
+        auto ret = std::find_if(cache.at(Set).begin(), cache.at(Set).end(),
+                                [&](const Cache &c)
+                                {
+                                    return c.valid && c.tag == Tag;
+                                });
+        return (ret != cache.at(Set).end()) ? (std::to_address(ret)) : (nullptr);
     }
 
     // simulate writing
@@ -131,7 +134,7 @@ public:
         auto findTarget = findTag(Tag, Set);
 
         // if there is no corresponding cache
-        if (findTarget == cache.at(Set).end())
+        if (findTarget == nullptr)
         {
             // when write-back, `i+1` level is always a subset of `i`, so never miss
             missCnt++;
@@ -152,7 +155,7 @@ public:
             x64 lowerTag, lowerSet;
             lower -> addr2TagSet(addr, lowerTag, lowerSet);
             auto found = lower -> findTag(lowerTag, lowerSet);
-            if (found != lower -> cache.at(lowerSet).end()) // we've loaded the cache block to this level, so normally it's ok
+            if (found != nullptr) // we've loaded the cache block to this level, so normally it's ok
                                                             // just in case
             {
                 if (increment) 
@@ -175,7 +178,7 @@ public:
         auto findTarget = findTag(Tag, Set);
 
         // if there is no corresponding cache
-        if (findTarget == cache.at(Set).end())
+        if (findTarget == nullptr)
         {
             missCnt++;
             LOG << "read: miss: " << missCnt << " addr 0x" << std::hex << addr << std::endl;
@@ -193,7 +196,7 @@ public:
             x64 lowerTag, lowerSet;
             lower -> addr2TagSet(addr, lowerTag, lowerSet);
             auto found = lower -> findTag(lowerTag, lowerSet);
-            if (found != lower -> cache.at(lowerSet).end()) // we've loaded the cache block to this level, so normally it's ok
+            if (found != nullptr) // we've loaded the cache block to this level, so normally it's ok
                                                             // just in case
             {
                 LOG << "read: setTime() for lower level" << " addr 0x" << std::hex << addr << std::endl;
@@ -211,7 +214,7 @@ public:
         // find the corresponding block to remove
         // same level
         auto findTarget = findTag(Tag, Set);
-        if (findTarget == cache.at(Set).end()) return;
+        if (findTarget == nullptr) return;
 
         eviCnt++;
         LOG << "evi: evication: " << eviCnt << " addr 0x" << std::hex << addr << std::endl;
