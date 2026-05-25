@@ -8,6 +8,8 @@
 #include <iostream>
 #include <utility>
 
+#define LOG !(ov4::DEBUG) ? (void)0 : ov4::LogVoidify() & std::clog
+
 namespace ov4 {
 
 class cacheLayer;
@@ -26,28 +28,7 @@ inline const x64 ARCH = 64;
 
 inline bool DEBUG = false;
 
-class Logger
-{
-public:
-    template <typename T> const Logger& operator<<(const T& val) const
-    {
-        if (DEBUG)
-        {
-            std::clog << val;
-        }
-        return *this;
-    }
-    const Logger &operator<<(std::ostream &(*manip)(std::ostream &)) const
-    {
-        if (DEBUG)
-        {
-            manip(std::clog);
-        }
-        return *this;
-    }
-};
-
-inline Logger ov4log;
+struct LogVoidify { void operator&(std::ostream&) const {} };
 
 class Cache
 {
