@@ -16,9 +16,11 @@ class Cache;
 typedef unsigned long long ull;
 typedef signed long long ll;
 typedef std::size_t x64;
+typedef std::pair<x64,x64> Pair;
 
 inline x64 timeNow = 0;
-inline x64 byte = 8; // normal CPU would have same cache line size across L1 L2 L3, so anyway it's glogal
+inline x64 b = 6;   // normal CPU would have same cache line size across L1 L2 L3, so anyway it's glogal
+                    // 2^6 = 64, intel default value
 
 inline bool DEBUG = false;
 
@@ -48,23 +50,40 @@ public:
 
     cacheLayer(x64 s, x64 E, cacheLayer *p, cacheLayer *q) { setSize(s, E); setPrev(p, q); }
 
-    inline std::pair<x64,x64> addr2TagSet(x64 addr)
+    inline void addr2TagSet(x64 addr, x64 &Tag, x64 &Set)
     {
         x64 Tag, Set;
-        Tag = addr >> (s+byte);
-        Set = ((addr << (64-s-byte)) >> (64-s-byte))>>byte;
-        return std::make_pair(Tag, Set);
+        Tag = addr >> (s+b);
+        Set = ((addr << (64-s-b)) >> (64-s-b))>>b;
     }
 
     inline x64 tagSet2Addr(x64 Tag, x64 Set)
     {
-        return ((Tag << s) | Set) << byte;
+        return ((Tag << s) | Set) << b;
+    }
+
+    inline std::vector<Cache>::iterator findTag(x64 Tag, x64 Set)
+    {
+        return std::find_if(cache[Set].begin(), cache[Set].end(),
+                            [&](const Cache &c)
+                            {
+                                return c.valid && c.tag == Tag;
+                            });
+    }
+
+    inline bool write(x64 addr)
+    {
+        x64 Tag, Set;
+        addr2TagSet(addr, Tag, Set);
+        auto findTarget = findTag(Tag, Set);
+        if (findTarget == cache[Set].end()) return false;
+        findTarget -> write();
     }
 
     inline void evi(x64 addr)
     {
-        std::pair<x64,x64> tmp = addr2TagSet(addr);
-        x64 Tag = tmp.first, Set = tmp.second;
+        x64 Tag, Set;
+        addr2TagSet(addr, Tag, Set);
 
         // find the corresponding block to remove
         // same level
@@ -85,6 +104,7 @@ public:
         if (lower != NULL && findTarget -> written)
         {
             lower -> writeCnt ++;
+            
         }
     }
 
@@ -101,6 +121,7 @@ public:
             findFree->valid = true;
             findFree->time = timeNow;
             findFree->tag = Tag;
+            findFree->written = false;
             return;
         }
 
@@ -117,7 +138,7 @@ public:
         findOld->valid = true;
         findOld->time = timeNow;
         findOld->tag = Tag;
-        
+        findFree->written = false;
     }
 };
 
@@ -142,9 +163,18 @@ public:
 
     inline bool getValid() { return valid; }
 
-    inline void setWritten(bool x) { written = x; }
-
     inline bool getWritten() { return written; }
+
+    inline void write()
+    {
+        written = true;
+        setTime();
+    }
+    
+    inline void read()
+    {
+        setTime();
+    }
 };
 
 
