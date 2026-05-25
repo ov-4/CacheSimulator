@@ -105,7 +105,7 @@ public:
                             });
     }
 
-    inline void write(x64 addr)
+    inline void write(x64 addr, bool increment = 1)
     {
         timeNow++;
 
@@ -116,15 +116,16 @@ public:
         // if there is no corresponding cache
         if (findTarget == cache[Set].end())
         {
+            // when write-back, `i+1` level is always a subset of `i`, so never miss
             missCnt++;
             allocate(Tag, Set);
             findTarget = findTag(Tag, Set);
         } else {
-            hitCnt++;
+            hitCnt += increment;
         }
 
         findTarget -> write();
-        writeCnt++;
+        writeCnt += increment;
 
         if (lower != NULL)
         {
@@ -191,7 +192,8 @@ public:
 
         if (lower != NULL && findTarget -> written)
         {
-            lower -> write(addr);
+            // write-back, so doesn't count into write
+            lower -> write(addr, 0);
         }
     }
 
