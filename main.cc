@@ -72,20 +72,21 @@ int main(int argc, char *argv[])
     while (getline(cache, line))
     {
         if (line.empty() || line.at(0) == ' ' || line.at(0) == '#') continue;
+        if (i >= num)
+        {
+            cerr << "LOL number of cache levels err" << endl;
+            return -1;
+        }
         size_t s, E;
         sscanf(line.c_str(), "%llu %llu", &s, &E);
 
         ca.at(i).setSize(s, E);
         i++;
-        if (i > num)
-        {
-            cerr << "LOL number of cache levels err" << endl;
-            return -1;
-        }
     }
 
     for (auto it = ca.begin(); it != ca.end(); it++)
     {
+        if (num == 1) break;
         if (it == ca.begin())
         {
             it->setLower(to_address(next(it, +1)));
