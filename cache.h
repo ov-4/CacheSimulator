@@ -96,6 +96,7 @@ public:
     inline cacheLayer* getLower() { return lower; }
 
     cacheLayer(x64 s, x64 E, cacheLayer *p, cacheLayer *q) { setSize(s, E); setPrev(p, q); }
+    cacheLayer() = default;
 
     inline void addr2TagSet(x64 addr, x64 &Tag, x64 &Set)
     {
