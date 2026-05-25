@@ -52,7 +52,6 @@ public:
 
     inline void addr2TagSet(x64 addr, x64 &Tag, x64 &Set)
     {
-        x64 Tag, Set;
         Tag = addr >> (s+b);
         Set = ((addr << (64-s-b)) >> (64-s-b))>>b;
     }
