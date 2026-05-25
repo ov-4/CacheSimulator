@@ -22,6 +22,8 @@ inline x64 timeNow = 0;
 inline x64 b = 6;   // normal CPU would have same cache line size across L1 L2 L3, so anyway it's glogal
                     // 2^6 = 64, intel default value
 
+inline const x64 ARCH = 64;
+
 inline bool DEBUG = false;
 
 class Cache
@@ -88,7 +90,7 @@ public:
     inline void addr2TagSet(x64 addr, x64 &Tag, x64 &Set)
     {
         Tag = addr >> (s+b);
-        Set = ((addr << (64-s-b)) >> (64-s-b))>>b;
+        Set = ((addr << (ARCH-s-b)) >> (ARCH-s-b))>>b;
     }
 
     inline x64 tagSet2Addr(x64 Tag, x64 Set)
