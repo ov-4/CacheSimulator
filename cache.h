@@ -116,6 +116,8 @@ public:
         {
             allocate(Tag, Set);
             findTarget = findTag(Tag, Set);
+        } else {
+            hitCnt++;
         }
 
         findTarget -> write();
@@ -138,6 +140,8 @@ public:
         {
             allocate(Tag, Set);
             findTarget = findTag(Tag, Set);
+        } else {
+            hitCnt++;
         }
 
         findTarget -> read();
