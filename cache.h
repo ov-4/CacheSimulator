@@ -143,7 +143,7 @@ public:
             findTarget = findTag(Tag, Set);
         } else {
             hitCnt += increment;
-            LOG << "write: hit: " << missCnt << " increment: " << increment << " addr 0x" << std::hex << addr << std::endl;
+            LOG << "write: hit: " << hitCnt << " increment: " << increment << " addr 0x" << std::hex << addr << std::endl;
         }
 
         writeCnt += increment;
