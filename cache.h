@@ -8,7 +8,7 @@
 #include <iostream>
 #include <utility>
 
-#define LOG !(ov4::DEBUG) ? (void)0 : ov4::LogVoidify() & std::clog
+#define LOG !(ov4::GLOBAL_DEBUG && ov4::DEBUG) ? (void)0 : ov4::LogVoidify() & std::clog
 
 namespace ov4 {
 
@@ -27,6 +27,7 @@ inline x64 b = 6;   // normal CPU would have same cache line size across L1 L2 L
 inline const x64 ARCH = 64;
 
 inline bool DEBUG = false;
+inline constexpr bool GLOBAL_DEBUG = true; // change this to false for performance 
 
 struct LogVoidify { void operator&(std::ostream&) const {} };
 
@@ -64,6 +65,7 @@ public:
         setTime();
     }
 };
+
 
 class cacheLayer
 {
@@ -111,6 +113,7 @@ public:
                             });
     }
 
+    // simulate writing
     inline void write(x64 addr, bool increment = 1)
     {
         timeNow++;
@@ -146,6 +149,7 @@ public:
         }
     }
 
+    // simulate reading
     inline void read(x64 addr)
     {
         timeNow++;
@@ -179,6 +183,7 @@ public:
         }
     }
 
+    // evict and write back 
     inline void evi(x64 addr)
     {
         x64 Tag, Set;
@@ -203,6 +208,7 @@ public:
         }
     }
 
+    // allocate new block
     void allocate(x64 Tag, x64 Set)
     {
         // when we call allocate(), it's always a miss
@@ -232,9 +238,11 @@ public:
                                            return x.time < y.time;
                                        });
 
-            // remove old one first, and add new one
+
+            // remove old one first
             evi(tagSet2Addr(findOld->tag, Set));
 
+            // add new one
             findOld->valid = true;
             findOld->time = timeNow;
             findOld->tag = Tag;
