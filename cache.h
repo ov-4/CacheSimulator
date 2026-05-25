@@ -100,7 +100,7 @@ public:
 
     inline std::vector<Cache>::iterator findTag(x64 Tag, x64 Set)
     {
-        return std::find_if(cache[Set].begin(), cache[Set].end(),
+        return std::find_if(cache.at(Set).begin(), cache.at(Set).end(),
                             [&](const Cache &c)
                             {
                                 return c.valid && c.tag == Tag;
@@ -116,7 +116,7 @@ public:
         auto findTarget = findTag(Tag, Set);
 
         // if there is no corresponding cache
-        if (findTarget == cache[Set].end())
+        if (findTarget == cache.at(Set).end())
         {
             // when write-back, `i+1` level is always a subset of `i`, so never miss
             missCnt++;
@@ -151,7 +151,7 @@ public:
         auto findTarget = findTag(Tag, Set);
 
         // if there is no corresponding cache
-        if (findTarget == cache[Set].end())
+        if (findTarget == cache.at(Set).end())
         {
             missCnt++;
             allocate(Tag, Set);
@@ -183,7 +183,7 @@ public:
         // find the corresponding block to remove
         // same level
         auto findTarget = findTag(Tag, Set);
-        if (findTarget == cache[Set].end()) return;
+        if (findTarget == cache.at(Set).end()) return;
 
         eviCnt++;
         
@@ -209,12 +209,12 @@ public:
         }
 
         // if we can find actual free slot, in current level
-        auto findFree = std::find_if(cache[Set].begin(), cache[Set].end(),
+        auto findFree = std::find_if(cache.at(Set).begin(), cache.at(Set).end(),
                                 [&](const Cache &c)
                                 {
                                     return !c.valid;
                                 });
-        if (findFree != cache[Set].end())
+        if (findFree != cache.at(Set).end())
         {
             findFree->valid = true;
             findFree->time = timeNow;
@@ -222,7 +222,7 @@ public:
             findFree->written = false;
         } else {
             // no slot is actually free, we have to find the oldest
-            auto findOld = min_element(cache[Set].begin(), cache[Set].end(),
+            auto findOld = min_element(cache.at(Set).begin(), cache.at(Set).end(),
                                        [](const Cache &x, const Cache &y)
                                        {
                                            return x.time < y.time;
