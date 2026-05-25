@@ -78,8 +78,8 @@ public:
     ll writeCnt = 0;
 
     // feel free to dereference this
-    cacheLayer *upper = NULL;
-    cacheLayer *lower = NULL;
+    cacheLayer *upper = nullptr;
+    cacheLayer *lower = nullptr;
 
     std::vector<std::vector<Cache>> cache;
 
@@ -140,7 +140,7 @@ public:
         LOG << "write: write: " << writeCnt << " increment: " << increment << " addr 0x" << std::hex << addr << std::endl;
         findTarget -> write(increment);
 
-        if (lower != NULL)
+        if (lower != nullptr)
         {
             x64 lowerTag, lowerSet;
             lower -> addr2TagSet(addr, lowerTag, lowerSet);
@@ -181,7 +181,7 @@ public:
 
         findTarget -> read();
 
-        if (lower != NULL)
+        if (lower != nullptr)
         {
             x64 lowerTag, lowerSet;
             lower -> addr2TagSet(addr, lowerTag, lowerSet);
@@ -209,7 +209,7 @@ public:
         eviCnt++;
         LOG << "evi: evication: " << eviCnt << " addr 0x" << std::hex << addr << std::endl;
         
-        if (upper != NULL)
+        if (upper != nullptr)
         {
             LOG << "evi: upper level evict addr 0x" << std::hex << addr << std::endl;
             upper -> evi(addr);
@@ -217,7 +217,7 @@ public:
 
         findTarget -> setValid(false);
 
-        if (lower != NULL && findTarget -> written)
+        if (lower != nullptr && findTarget -> written)
         {
             // write-back, so doesn't count into write
             LOG << "evi: lower level write back addr 0x" << std::hex << addr << std::endl;
@@ -230,7 +230,7 @@ public:
     {
         // when we call allocate(), it's always a miss
         // get data from lower level
-        if (lower != NULL)
+        if (lower != nullptr)
         {
             LOG << "allocate: reading lower level tag: 0x" << std::hex << Tag << " set: 0x" << std::hex << Set << std::endl;
             lower -> read(this -> tagSet2Addr(Tag, Set));
