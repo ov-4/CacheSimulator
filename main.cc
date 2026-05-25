@@ -5,7 +5,10 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
-
+#include <cctype>
+#include <memory>
+#include <iterator>
+#include "cache.h"
 
 extern "C" {
     #include <getopt.h>
@@ -15,120 +18,26 @@ extern "C" {
 
 using namespace std;
 
-long long s, E, b,
-            hitCnt, missCnt, eviCnt;
-size_t timeCnt;
-string traceFile;
-bool DEBUG = false;
-
-class ov4Cache
-{
-public:
-    bool valid = false;
-    size_t tag = 0;
-    size_t time = 0;
-};
-
-vector<vector<ov4Cache>> cache;
-
-void findFreeSlot(const size_t Tag, const size_t Set) // update eviCnt
-{
-    // if we can find free slot!
-    auto findFree = find_if(cache[Set].begin(), cache[Set].end(),
-        [&](const ov4Cache &c)
-    {
-        return !c.valid;
-    });
-    if (findFree != cache[Set].end())
-    {
-        findFree->valid = true;
-        findFree->time = timeCnt; // very important to update time
-        findFree->tag = Tag;
-        return;
-    }
-
-    // no slot is free, and we have to find the oldest
-    eviCnt++;
-    auto findOld = min_element(cache[Set].begin(), cache[Set].end(),
-    [](const ov4Cache &x, const ov4Cache &y)
-    {
-        return x.time < y.time;
-    });
-    findOld->valid = true;
-    findOld->time = timeCnt;
-    findOld->tag = Tag;
-    if (DEBUG) cout << "eviction ";
-}
-
-void solve(const size_t addr) // update hitCnt, missCnt
-{
-    timeCnt++;
-    size_t Tag, Set;
-    Tag = addr >> (s+b);
-    Set = ((addr << (64-s-b)) >> (64-s-b))>>b;
-
-    // determine hit/miss
-    auto res = find_if(cache[Set].begin(), cache[Set].end(),
-        [&](const ov4Cache &c)
-    {
-        return c.valid && c.tag == Tag;
-    });
-    if (res != cache[Set].end())
-    {
-        hitCnt++;
-        res->time = timeCnt; // update the time, because we use it again
-
-        if (DEBUG) cout << "hit ";
-
-        return;
-    }
-
-    missCnt++;
-    if (DEBUG) cout << "miss ";
-    findFreeSlot(Tag, Set);
-}
-
-
-
-
 int main(int argc, char *argv[])
 {
+    string traceFile = "", cacheFile = "", line = "";
+    size_t num = 0, i = 0;
+    vector<ov4::cacheLayer> ca;
+
     // get arguments
     int opt = '?';
-    while ((opt = getopt(argc, argv, "s:E:b:t:vh")) != -1) 
+    while ((opt = getopt(argc, argv, "f:t:v")) != -1) 
     {
         switch (opt) 
         {
-            case 's':
-                s = atol(optarg);
-                break;
-            case 'E':
-                E = atol(optarg);
-                break;
-            case 'b':
-                b = atol(optarg);
+            case 'f':
+                cacheFile = optarg;
                 break;
             case 't':
                 traceFile = optarg;
                 break;
             case 'v':
-                DEBUG = true;
-                break;
-            case 'h':
-                cout << "\
-Usage: ./csim [-hv] -s <num> -E <num> -b <num> -t <file>\n\
-Options:\n\
-  -h         Print this help message.\n\
-  -v         Optional verbose flag.\n\
-  -s <num>   Number of set index bits.\n\
-  -E <num>   Number of lines per set.\n\
-  -b <num>   Number of block offset bits.\n\
-  -t <file>  Trace file.\n\
-\n\
-Examples:\n\
-  linux>  ./csim -s 4 -E 1 -b 4 -t traces/yi.trace\n\
-  linux>  ./csim -v -s 8 -E 2 -b 4 -t traces/yi.trace" << endl;
-                return 0;
+                ov4::DEBUG = true;
                 break;
             case '?':
                 cerr << "Unknow arg" << endl;
@@ -137,36 +46,90 @@ Examples:\n\
                 break;
         }
     }
-
-    // update size of cache
-    cache.resize((1<<s), vector<ov4Cache>(E));
-
-    ifstream file(traceFile);
-    if (!file.is_open()) {
+    ifstream trace(traceFile);
+    if (!trace.is_open()) {
+        cerr << "LOL" << endl;
+        return -1;
+    }
+    ifstream cache(cacheFile);
+    if (!cache.is_open()) {
         cerr << "LOL" << endl;
         return -1;
     }
 
-    // handle every line
-    // NB. `L` `S` are acutally same operations in terms of counting
-    // for `M`, it can be treated as `L` followed by `S`, and consequently twice `solve()`
-    string line;
-    while (getline(file, line))
+    while (getline(cache, line))
     {
-        if (line.size()==0 || line[0] == 'I') continue; // ignore I
+        if (line.empty() || line.at(0) == ' ' || line.at(0) == '#') continue;
+        if (all_of(line.begin(), line.end(), [](unsigned char c) { return std::isdigit(c); }))
+        {
+            sscanf(line.c_str(), "%llu", &num);
+            break;
+        }
+    }
+    
+    ca.resize(num);
+
+    while (getline(cache, line))
+    {
+        if (line.empty() || line.at(0) == ' ' || line.at(0) == '#') continue;
+        size_t s, E;
+        sscanf(line.c_str(), "%llu %llu", &s, &E);
+
+        ca.at(i).setSize(s, E);
+        i++;
+        if (i > num)
+        {
+            cerr << "LOL number of cache levels err" << endl;
+            return -1;
+        }
+    }
+
+    for (auto it = ca.begin(); it != ca.end(); it++)
+    {
+        if (it == ca.begin())
+        {
+            it->setLower(to_address(next(it, +1)));
+            continue;
+        }
+        if (next(it, +1) == ca.end())
+        {
+            it->setUpper(to_address(next(it, -1)));
+            continue;
+        }
+        it->setUpper(to_address(next(it, -1)));
+        it->setLower(to_address(next(it, +1)));
+    }
+
+    while (getline(trace, line))
+    {
+        if (line.empty() || line.at(0) == '#' || line.at(0) == 'I') continue;
         char op;
         size_t addr;
         int useless;
         sscanf(line.c_str(), " %c %zx,%d", &op, &addr, &useless);
 
-        if (DEBUG) cout << op << " " << hex << addr << "," << useless << " ";
-
-        if (op == 'S' || op == 'L') solve(addr);
-        else {solve(addr); solve(addr); }
-        cout << endl;
+        cout << op << endl;
+        switch (op)
+        {
+            case 'L':
+                ca.at(0).read(addr);
+                break;
+            case 'S':
+                ca.at(0).write(addr);
+                break;
+            case 'M':
+                ca.at(0).read(addr);
+                ca.at(0).write(addr);
+                break;
+            default:
+                cerr << "LOL trace err" << endl;
+                break;
+        }
     }
 
-
-    file.close();
+    for (auto &c : ca)
+    {
+        cout << "hit: " << c.hitCnt << " miss: " << c.missCnt << " write: " << c.writeCnt << endl;
+    }
     return 0;
 }
