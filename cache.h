@@ -107,6 +107,8 @@ public:
 
     inline void write(x64 addr)
     {
+        timeNow++;
+
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
         auto findTarget = findTag(Tag, Set);
@@ -114,6 +116,7 @@ public:
         // if there is no corresponding cache
         if (findTarget == cache[Set].end())
         {
+            missCnt++;
             allocate(Tag, Set);
             findTarget = findTag(Tag, Set);
         } else {
@@ -138,6 +141,8 @@ public:
 
     inline void read(x64 addr)
     {
+        timeNow++;
+
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
         auto findTarget = findTag(Tag, Set);
@@ -145,6 +150,7 @@ public:
         // if there is no corresponding cache
         if (findTarget == cache[Set].end())
         {
+            missCnt++;
             allocate(Tag, Set);
             findTarget = findTag(Tag, Set);
         } else {
@@ -223,16 +229,10 @@ public:
         // we don't actually consider data
         // so if the lower level doesn't have this, it should also load the data
         // so current level can load
+        // current level should leterally READ from lower level
         if (lower != NULL)
         {
-            x64 lowerTag, lowerSet, addr = tagSet2Addr(Tag, Set);
-            lower -> addr2TagSet(addr, lowerTag, lowerSet);
-            auto found = lower -> findTag(lowerTag, lowerSet);
-            if (found == lower -> cache.at(lowerSet).end())
-            {
-                lower -> allocate(lowerTag, lowerSet);
-                lower -> missCnt++;
-            }
+            lower -> read(this -> tagSet2Addr(Tag, Set));
         }
     }
 };
