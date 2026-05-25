@@ -198,7 +198,7 @@ public:
             x64 lowerTag, lowerSet, addr = tagSet2Addr(Tag, Set);
             lower -> addr2TagSet(addr, lowerTag, lowerSet);
             auto found = lower -> findTag(lowerTag, lowerSet);
-            if (found == lower -> cache.at(Set).end())
+            if (found == lower -> cache.at(lowerSet).end())
             {
                 lower -> allocate(lowerTag, lowerSet);
                 lower -> missCnt++;
