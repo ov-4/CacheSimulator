@@ -105,25 +105,37 @@ public:
                             });
     }
 
-    inline bool write(x64 addr)
+    inline void write(x64 addr)
     {
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
         auto findTarget = findTag(Tag, Set);
-        if (findTarget == cache[Set].end()) return false; // TODO: write-allocate
+
+        // if there is no corresponding cache
+        if (findTarget == cache[Set].end())
+        {
+            allocate(Tag, Set);
+            findTarget = findTag(Tag, Set);
+        }
+
         findTarget -> write();
         writeCnt++;
-        return true;
     }
 
-    inline bool read(x64 addr)
+    inline void read(x64 addr)
     {
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
         auto findTarget = findTag(Tag, Set);
-        if (findTarget == cache[Set].end()) return false; // TODO: read-allocate
+
+        // if there is no corresponding cache
+        if (findTarget == cache[Set].end())
+        {
+            allocate(Tag, Set);
+            findTarget = findTag(Tag, Set);
+        }
+
         findTarget -> read();
-        return true;
     }
 
     inline void evi(x64 addr)
@@ -180,6 +192,18 @@ public:
         findOld->time = timeNow;
         findOld->tag = Tag;
         findOld->written = false;
+
+        if (lower != NULL)
+        {
+            x64 lowerTag, lowerSet, addr = tagSet2Addr(Tag, Set);
+            lower -> addr2TagSet(addr, lowerTag, lowerSet);
+            auto found = lower -> findTag(lowerTag, lowerSet);
+            if (found == lower -> cache.at(Set).end())
+            {
+                lower -> allocate(lowerTag, lowerSet);
+                lower -> missCnt++;
+            }
+        }
     }
 };
 
