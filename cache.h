@@ -33,6 +33,8 @@ struct LogVoidify { void operator&(std::ostream&) const {} };
 
 class Cache
 {
+friend class cacheLayer;
+
 public:
     bool valid = false;
     bool written = false;
@@ -69,6 +71,8 @@ public:
 
 class cacheLayer
 {
+friend class Cache;
+
 public:
     ll s = 0, E = 0;
     ll hitCnt = 0;
