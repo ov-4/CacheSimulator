@@ -24,6 +24,41 @@ inline x64 b = 6;   // normal CPU would have same cache line size across L1 L2 L
 
 inline bool DEBUG = false;
 
+class Cache
+{
+public:
+    bool valid = false;
+    bool written = false;
+    x64 tag = 0;
+    x64 time = 0;
+
+
+    inline void setTime() { time = timeNow; }
+
+    inline x64 getTime() { return time; }
+
+    inline void setTag(x64 x) { tag = x; }
+
+    inline x64 getTag() { return tag; }
+
+    inline void setValid(bool x) { valid = x; }
+
+    inline bool getValid() { return valid; }
+
+    inline bool getWritten() { return written; }
+
+    inline void write()
+    {
+        written = true;
+        setTime();
+    }
+    
+    inline void read()
+    {
+        setTime();
+    }
+};
+
 class cacheLayer
 {
 public:
@@ -75,7 +110,7 @@ public:
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
         auto findTarget = findTag(Tag, Set);
-        if (findTarget == cache[Set].end()) return false;
+        if (findTarget == cache[Set].end()) return false; // TODO: write-allocate
         findTarget -> write();
         writeCnt++;
         return true;
@@ -86,7 +121,7 @@ public:
         x64 Tag, Set;
         addr2TagSet(addr, Tag, Set);
         auto findTarget = findTag(Tag, Set);
-        if (findTarget == cache[Set].end()) return false;
+        if (findTarget == cache[Set].end()) return false; // TODO: read-allocate
         findTarget -> read();
         return true;
     }
@@ -114,7 +149,7 @@ public:
         }
     }
 
-    void findFreeSlot(x64 Tag, x64 Set)
+    void allocate(x64 Tag, x64 Set)
     {
         // if we can find actual free slot
         auto findFree = std::find_if(cache[Set].begin(), cache[Set].end(),
@@ -145,41 +180,6 @@ public:
         findOld->time = timeNow;
         findOld->tag = Tag;
         findOld->written = false;
-    }
-};
-
-class Cache
-{
-public:
-    bool valid = false;
-    bool written = false;
-    x64 tag = 0;
-    x64 time = 0;
-
-
-    inline void setTime() { time = timeNow; }
-
-    inline x64 getTime() { return time; }
-
-    inline void setTag(x64 x) { tag = x; }
-
-    inline x64 getTag() { return tag; }
-
-    inline void setValid(bool x) { valid = x; }
-
-    inline bool getValid() { return valid; }
-
-    inline bool getWritten() { return written; }
-
-    inline void write()
-    {
-        written = true;
-        setTime();
-    }
-    
-    inline void read()
-    {
-        setTime();
     }
 };
 
