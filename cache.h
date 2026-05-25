@@ -199,7 +199,14 @@ public:
 
     void allocate(x64 Tag, x64 Set)
     {
-        // if we can find actual free slot
+        // when we call allocate(), it's always a miss
+        // get data from lower level
+        if (lower != NULL)
+        {
+            lower -> read(this -> tagSet2Addr(Tag, Set));
+        }
+
+        // if we can find actual free slot, in current level
         auto findFree = std::find_if(cache[Set].begin(), cache[Set].end(),
                                 [&](const Cache &c)
                                 {
@@ -226,15 +233,6 @@ public:
             findOld->time = timeNow;
             findOld->tag = Tag;
             findOld->written = false;
-        }
-
-        // we don't actually consider data
-        // so if the lower level doesn't have this, it should also load the data
-        // so current level can load
-        // current level should leterally READ from lower level
-        if (lower != NULL)
-        {
-            lower -> read(this -> tagSet2Addr(Tag, Set));
         }
     }
 };
