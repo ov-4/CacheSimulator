@@ -28,6 +28,7 @@ inline bool DEBUG = false;
 
 class Logger
 {
+public:
     template <typename T> const Logger& operator<<(const T& val) const
     {
         if (DEBUG)
