@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         int useless;
         sscanf(line.c_str(), " %c %zx,%d", &op, &addr, &useless);
 
-        cout << op << endl;
+        LOG << op << " " << hex << addr << " " << dec << useless << endl;
         switch (op)
         {
             case 'L':
