@@ -21,7 +21,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     string traceFile = "", cacheFile = "", line = "";
-    size_t num = 0, i = 0;
+    size_t num = 0, i = 0, b = 6;
     vector<ov4::cacheLayer> ca;
 
     // get arguments
@@ -57,14 +57,13 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    // get numberOfLevels and b
     while (getline(cache, line))
     {
         if (line.empty() || line.at(0) == ' ' || line.at(0) == '#') continue;
-        if (all_of(line.begin(), line.end(), [](unsigned char c) { return std::isdigit(c); }))
-        {
-            sscanf(line.c_str(), "%llu", &num);
-            break;
-        }
+        
+        sscanf(line.c_str(), "%llu %llu", &num, &b);
+        break;
     }
     
     ca.resize(num);
