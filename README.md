@@ -11,7 +11,7 @@
 
 ## TODO
 
-- read/write length support
+- read/write length support (known issue: please edit variable `b` in the head file rather than `main.cc` to change block size)
 
 
 ## Usage
