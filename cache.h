@@ -160,8 +160,8 @@ public:
             {
                 if (increment) 
                 { 
-                    LOG << "write: setTime() for lower level" << " addr 0x" << std::hex << addr << std::endl;
-                    found -> setTime();
+                    LOG << "write: setTime() for lower level(s)" << " addr 0x" << std::hex << addr << std::endl;
+                    lower -> write(addr);
                 }
             }
         }
@@ -199,8 +199,8 @@ public:
             if (found != nullptr) // we've loaded the cache block to this level, so normally it's ok
                                                             // just in case
             {
-                LOG << "read: setTime() for lower level" << " addr 0x" << std::hex << addr << std::endl;
-                found -> setTime();
+                LOG << "read: setTime() for lower level(s)" << " addr 0x" << std::hex << addr << std::endl;
+                lower -> read(addr);
             }
         }
     }
